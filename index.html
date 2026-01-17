@@ -55,7 +55,7 @@ header h1{font-size:18px;margin:0}
   z-index:999
 }
 
-/* always on top */
+/* top controls */
 .top-controls{
   position:absolute;
   top:10px;
@@ -83,7 +83,7 @@ header h1{font-size:18px;margin:0}
   z-index:20
 }
 
-/* ===== IMAGE ===== */
+/* image */
 #imageWrap{
   width:100%;
   height:100%;
@@ -102,7 +102,7 @@ header h1{font-size:18px;margin:0}
   pointer-events:none
 }
 
-/* ===== THUMB STRIP ===== */
+/* thumb strip */
 #thumbStrip{
   position:absolute;
   bottom:0;
@@ -111,26 +111,31 @@ header h1{font-size:18px;margin:0}
   height:90px;
   background:rgba(0,0,0,.75);
   display:flex;
-  justify-content:center;      /* căn giữa */
+  justify-content:center;
   align-items:center;
   gap:8px;
   padding:8px 0;
-  overflow-x:auto;             /* cho phép trượt ngang */
+  overflow-x:auto;
   overflow-y:hidden;
   z-index:20;
   scroll-behavior:smooth;
+  -webkit-overflow-scrolling:touch;
+  touch-action:pan-x
 }
-
-#thumbStrip::-webkit-scrollbar{
-  height:6px;
+#thumbStrip img{
+  height:100%;
+  cursor:pointer;
+  opacity:.5;
+  border-radius:4px;
 }
+#thumbStrip img.active{
+  opacity:1;
+  outline:2px solid #0af
+}
+#thumbStrip::-webkit-scrollbar{height:6px}
 #thumbStrip::-webkit-scrollbar-thumb{
   background:#555;
-  border-radius:3px;
-}
-#thumbStrip{
-  -webkit-overflow-scrolling: touch;
-  touch-action: pan-x;
+  border-radius:3px
 }
 </style>
 </head>
@@ -171,9 +176,10 @@ let index=0,scale=1,x=0,y=0
 let drag=false,startX=0,startY=0
 let anim=false,lastTap=0
 
-/* ===== ALBUM ===== */
+/* ===== ALBUM + THUMBS ===== */
 for(let i=1;i<=total;i++){
   const n=String(i).padStart(2,'0')
+
   const d=document.createElement('div')
   d.className='thumb'
   d.innerHTML=`<img src="images/${n}.jpg">`
@@ -241,7 +247,7 @@ function slide(d){
   },250)
 }
 
-/* ===== THUMB ===== */
+/* ===== THUMB STRIP ===== */
 function setActive(){
   [...strip.children].forEach((t,i)=>{
     t.classList.toggle('active',i===index)
@@ -259,6 +265,7 @@ function setActive(){
 
   strip.scrollLeft += offset
 }
+
 function jump(i){
   index=i
   reset()
