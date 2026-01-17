@@ -1,273 +1,231 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Album Preview</title>
 
 <style>
-* { box-sizing: border-box }
-
-body {
+html, body {
   margin: 0;
+  padding: 0;
   background: #000;
-  color: #fff;
-  font-family: Arial, sans-serif;
-  user-select: none;
   overflow: hidden;
+  height: 100%;
+  touch-action: none;
+  user-select: none;
 }
 
-/* Header */
-.header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 50px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0 12px;
-  background: rgba(0,0,0,0.6);
-  z-index: 20;
-}
-
-.header img {
-  height: 32px;
-}
-
-.counter {
-  margin-left: auto;
-  opacity: 0.8;
-}
-
-/* Viewer */
-.viewer {
+#viewer {
   position: fixed;
   inset: 0;
-  background: #000;
-  overflow: hidden;
-  touch-action: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.viewer img {
-  position: absolute;
-  top: 50%;
-  left: 50%;
+#slider {
+  display: flex;
+  height: 100%;
+  transition: transform 0.45s cubic-bezier(.4,0,.2,1);
+}
+
+.slide {
+  min-width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.slide img {
   max-width: 100%;
   max-height: 100%;
-  transform: translate(-50%, -50%) scale(1);
-  transition: transform 0.35s ease;
+  transform-origin: center center;
+  transition: transform 0.15s ease-out;
   cursor: grab;
 }
 
-/* Navigation */
+.slide img:active {
+  cursor: grabbing;
+}
+
 .nav {
-  position: absolute;
+  position: fixed;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 52px;
-  color: rgba(255,255,255,0.6);
+  font-size: 48px;
+  color: white;
+  padding: 10px 20px;
   cursor: pointer;
-  padding: 20px;
+  opacity: 0.7;
   z-index: 10;
 }
 
-.nav:hover { color: #fff }
+.nav:hover { opacity: 1 }
 
-.prev { left: 0 }
-.next { right: 0 }
+#prev { left: 0 }
+#next { right: 0 }
 
-/* Close */
-.close {
+#counter {
   position: fixed;
-  top: 8px;
-  right: 12px;
-  font-size: 30px;
+  bottom: 15px;
+  right: 20px;
+  color: white;
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+#close {
+  position: fixed;
+  top: 15px;
+  right: 20px;
+  font-size: 28px;
+  color: white;
   cursor: pointer;
-  z-index: 30;
+  z-index: 10;
   opacity: 0.8;
 }
-.close:hover { opacity: 1 }
-
-/* Slide animation */
-.slide-next {
-  animation: slideNext 0.4s ease;
-}
-.slide-prev {
-  animation: slidePrev 0.4s ease;
-}
-
-@keyframes slideNext {
-  from { transform: translate(100%, -50%) scale(1); opacity: 0.5 }
-  to   { transform: translate(-50%, -50%) scale(1); opacity: 1 }
-}
-
-@keyframes slidePrev {
-  from { transform: translate(-200%, -50%) scale(1); opacity: 0.5 }
-  to   { transform: translate(-50%, -50%) scale(1); opacity: 1 }
-}
+#close:hover { opacity: 1 }
 </style>
 </head>
 
-<body oncontextmenu="return false">
+<body>
 
-<div class="header" id="header">
-  <img src="logo.png">
-  <div>ALBUM PREVIEW</div>
-  <div class="counter" id="counter"></div>
+<div id="viewer">
+  <div id="slider"></div>
 </div>
 
-<div class="viewer" id="viewer">
-  <div class="nav prev" onclick="prevImage()">&#9664;</div>
-  <img id="img">
-  <div class="nav next" onclick="nextImage()">&#9654;</div>
-</div>
-
-<div class="close" onclick="exitPreview()">✕</div>
+<div id="prev" class="nav">◀</div>
+<div id="next" class="nav">▶</div>
+<div id="close">✕</div>
+<div id="counter"></div>
 
 <script>
-/* ===== CONFIG ===== */
-const imageFolder = "images/"
 const totalImages = 20
-
-const images = Array.from({ length: totalImages }, (_, i) =>
-  imageFolder + String(i + 1).padStart(2, "0") + ".jpg"
+const imageFolder = "images/"
+const images = Array.from({length: totalImages}, (_, i) =>
+  imageFolder + String(i+1).padStart(2,"0") + ".jpg"
 )
 
-/* ===== STATE ===== */
+const slider = document.getElementById("slider")
+const counter = document.getElementById("counter")
+
 let index = 0
 let scale = 1
-let posX = 0
-let posY = 0
+let panX = 0
+let panY = 0
+let isPanning = false
 let startX = 0
 let startY = 0
-let isDragging = false
-let touchStartX = 0
-let lastDistance = 0
 
-const img = document.getElementById("img")
-const counter = document.getElementById("counter")
-const header = document.getElementById("header")
+images.forEach(src => {
+  const slide = document.createElement("div")
+  slide.className = "slide"
+  const img = document.createElement("img")
+  img.src = src
+  slide.appendChild(img)
+  slider.appendChild(slide)
+})
 
-/* ===== FUNCTIONS ===== */
-function updateTransform() {
-  img.style.transform =
-    `translate(calc(-50% + ${posX}px), calc(-50% + ${posY}px)) scale(${scale})`
+const slides = document.querySelectorAll(".slide img")
+
+function updateSlider(animate = true) {
+  slider.style.transition = animate
+    ? "transform 0.45s cubic-bezier(.4,0,.2,1)"
+    : "none"
+  slider.style.transform = `translateX(${-index * window.innerWidth}px)`
+  counter.textContent = `${index+1}/${totalImages}`
+  resetTransform()
 }
 
-function showImage(i, dir) {
-  img.className = ""
-  void img.offsetWidth
-  img.src = images[i]
-  img.classList.add(dir === "next" ? "slide-next" : "slide-prev")
-
+function resetTransform() {
   scale = 1
-  posX = 0
-  posY = 0
-  updateTransform()
-
-  counter.textContent = `${i + 1} / ${images.length}`
+  panX = panY = 0
+  applyTransform()
 }
 
-function nextImage() {
-  index = (index + 1) % images.length
-  showImage(index, "next")
+function applyTransform() {
+  slides[index].style.transform =
+    `translate(${panX}px, ${panY}px) scale(${scale})`
 }
 
-function prevImage() {
-  index = (index - 1 + images.length) % images.length
-  showImage(index, "prev")
-}
-
-/* ===== FULLSCREEN ===== */
-function enterFullscreen() {
-  const el = document.documentElement
-  if (el.requestFullscreen) el.requestFullscreen()
-}
-
-function exitPreview() {
-  if (document.fullscreenElement) {
-    document.exitFullscreen()
+document.getElementById("next").onclick = () => {
+  if (index < totalImages-1) {
+    index++
+    updateSlider()
   }
 }
 
-/* ===== EVENTS ===== */
+document.getElementById("prev").onclick = () => {
+  if (index > 0) {
+    index--
+    updateSlider()
+  }
+}
+
+document.getElementById("close").onclick = () => {
+  window.history.back()
+}
+
 document.addEventListener("keydown", e => {
-  if (e.key === "ArrowRight") nextImage()
-  if (e.key === "ArrowLeft") prevImage()
-  if (e.key === "Escape") exitPreview()
+  if (e.key === "ArrowRight") document.getElementById("next").click()
+  if (e.key === "ArrowLeft") document.getElementById("prev").click()
 })
 
-img.addEventListener("wheel", e => {
-  e.preventDefault()
-  scale += e.deltaY < 0 ? 0.1 : -0.1
-  scale = Math.min(Math.max(1, scale), 4)
-  updateTransform()
-})
+slides.forEach(img => {
 
-img.addEventListener("mousedown", e => {
-  if (scale <= 1) return
-  isDragging = true
-  startX = e.clientX - posX
-  startY = e.clientY - posY
-  img.style.cursor = "grabbing"
-})
+  // ZOOM PC
+  img.addEventListener("wheel", e => {
+    e.preventDefault()
+    const delta = e.deltaY < 0 ? 0.1 : -0.1
+    scale = Math.min(Math.max(1, scale + delta), 4)
+    applyTransform()
+  }, { passive:false })
 
-window.addEventListener("mousemove", e => {
-  if (!isDragging) return
-  posX = e.clientX - startX
-  posY = e.clientY - startY
-  updateTransform()
-})
+  // PAN START
+  img.addEventListener("mousedown", e => {
+    if (scale <= 1) return
+    isPanning = true
+    startX = e.clientX - panX
+    startY = e.clientY - panY
+  })
 
-window.addEventListener("mouseup", () => {
-  isDragging = false
-  img.style.cursor = "grab"
-})
+  window.addEventListener("mousemove", e => {
+    if (!isPanning) return
+    panX = e.clientX - startX
+    panY = e.clientY - startY
+    applyTransform()
+  })
 
-img.addEventListener("touchstart", e => {
-  if (e.touches.length === 1) {
-    touchStartX = e.touches[0].clientX
-    startX = touchStartX - posX
-    startY = e.touches[0].clientY - posY
-    isDragging = scale > 1
-  }
-})
+  window.addEventListener("mouseup", () => {
+    isPanning = false
+  })
 
-img.addEventListener("touchmove", e => {
-  if (e.touches.length === 1 && isDragging) {
-    posX = e.touches[0].clientX - startX
-    posY = e.touches[0].clientY - startY
-    updateTransform()
-  }
-
-  if (e.touches.length === 2) {
-    const dx = e.touches[0].clientX - e.touches[1].clientX
-    const dy = e.touches[0].clientY - e.touches[1].clientY
-    const dist = Math.sqrt(dx*dx + dy*dy)
-    if (lastDistance) {
-      scale += (dist - lastDistance) * 0.002
-      scale = Math.min(Math.max(1, scale), 4)
-      updateTransform()
+  // MOBILE PAN
+  let lastTouchX = 0, lastTouchY = 0
+  img.addEventListener("touchstart", e => {
+    if (e.touches.length === 1 && scale > 1) {
+      lastTouchX = e.touches[0].clientX
+      lastTouchY = e.touches[0].clientY
     }
-    lastDistance = dist
-  }
+  })
+
+  img.addEventListener("touchmove", e => {
+    if (e.touches.length === 1 && scale > 1) {
+      const dx = e.touches[0].clientX - lastTouchX
+      const dy = e.touches[0].clientY - lastTouchY
+      panX += dx
+      panY += dy
+      lastTouchX = e.touches[0].clientX
+      lastTouchY = e.touches[0].clientY
+      applyTransform()
+    }
+  })
 })
 
-img.addEventListener("touchend", e => {
-  if (e.changedTouches.length === 1 && scale === 1) {
-    const dx = e.changedTouches[0].clientX - touchStartX
-    if (dx > 60) prevImage()
-    if (dx < -60) nextImage()
-  }
-  lastDistance = 0
-  isDragging = false
-})
-
-/* ===== INIT ===== */
-showImage(index)
-setTimeout(enterFullscreen, 300)
+updateSlider(false)
 </script>
 
 </body>
