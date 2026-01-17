@@ -34,8 +34,13 @@ header h1{font-size:18px;margin:0}
 }
 /* ===== Layout album cho MOBILE ===== */
 @media (max-width: 768px) {
+  body {
+    overflow-y: auto;
+  }
+
   #album {
-    grid-template-columns: repeat(2, 1fr); /* 2 cột */
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: 20px;
     padding: 16px;
     overflow-y: auto;
@@ -45,18 +50,14 @@ header h1{font-size:18px;margin:0}
     background: #111;
     border-radius: 12px;
     padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    overflow: visible;
   }
 
   .thumb img {
     width: 100%;
-    height: 100%;
-    aspect-ratio: 3 / 4;   /* ép khung cao hơn để ảnh to */
-    object-fit: contain;  /* KHÔNG crop */
+    height: auto;
+    object-fit: contain;   /* KHÔNG CROP */
     display: block;
-    transform: scale(1.6); /* PHÓNG TO THÊM */
   }
 }
 
