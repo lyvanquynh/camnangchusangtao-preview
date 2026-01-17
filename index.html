@@ -3,79 +3,78 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Image Album Viewer</title>
+<title>Album Preview</title>
 
 <style>
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
 }
 
-#album {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 10px;
-  padding: 10px;
+#album{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
+  gap:10px;
+  padding:10px;
 }
 
-#album img {
-  width: 100%;
-  cursor: pointer;
-  border-radius: 6px;
+#album img{
+  width:100%;
+  cursor:pointer;
+  border-radius:6px;
 }
 
-#viewer {
-  position: fixed;
-  inset: 0;
-  background: black;
-  display: none;
-  z-index: 999;
-  touch-action: none;
+#viewer{
+  position:fixed;
+  inset:0;
+  background:#000;
+  display:none;
+  z-index:999;
+  overflow:hidden;
 }
 
-#imageWrap {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
+#slides{
+  position:absolute;
+  inset:0;
+  overflow:hidden;
 }
 
-.slide {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.45s ease;
+.slide{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  will-change:transform;
+  transition:transform .45s ease;
 }
 
-.slide img {
-  max-width: 100%;
-  max-height: 100%;
-  transform-origin: center center;
-  transition: transform 0.25s ease;
-  user-select: none;
-  pointer-events: none;
+.slide img{
+  max-width:100%;
+  max-height:100%;
+  user-select:none;
+  pointer-events:none;
+  transition:transform .25s ease;
+  transform-origin:center center;
 }
 
-#closeBtn {
-  position: absolute;
-  top: 15px;
-  right: 20px;
-  font-size: 30px;
-  color: white;
-  cursor: pointer;
-  z-index: 10;
+#close{
+  position:absolute;
+  top:15px;
+  right:20px;
+  font-size:30px;
+  color:#fff;
+  cursor:pointer;
+  z-index:10;
 }
 
-#counter {
-  position: absolute;
-  bottom: 15px;
-  left: 50%;
-  transform: translateX(-50%);
-  color: white;
-  font-size: 14px;
-  z-index: 10;
+#counter{
+  position:absolute;
+  bottom:15px;
+  left:50%;
+  transform:translateX(-50%);
+  color:#fff;
+  font-size:14px;
 }
 </style>
 </head>
@@ -85,185 +84,179 @@ body {
 <div id="album"></div>
 
 <div id="viewer">
-  <div id="closeBtn">✕</div>
-  <div id="imageWrap"></div>
+  <div id="close">✕</div>
+  <div id="slides"></div>
   <div id="counter"></div>
 </div>
 
 <script>
-const totalImages = 20
+const TOTAL = 20
 const album = document.getElementById('album')
 const viewer = document.getElementById('viewer')
-const imageWrap = document.getElementById('imageWrap')
-const closeBtn = document.getElementById('closeBtn')
+const slides = document.getElementById('slides')
 const counter = document.getElementById('counter')
+const closeBtn = document.getElementById('close')
 
 let index = 0
-let currentSlide = null
+let activeSlide = null
 
+// zoom & pan
 let scale = 1
 let x = 0
 let y = 0
 let dragging = false
-let startX = 0
-let startY = 0
+let sx = 0
+let sy = 0
 
-// tạo album
-for (let i = 1; i <= totalImages; i++) {
-  const img = document.createElement('img')
-  img.src = `images/${String(i).padStart(2, '0')}.jpg`
-  img.onclick = () => openViewer(i - 1)
+/* ===== ALBUM (GIỮ NGUYÊN) ===== */
+for(let i=1;i<=TOTAL;i++){
+  const img=document.createElement('img')
+  img.src=`images/${String(i).padStart(2,'0')}.jpg`
+  img.onclick=()=>open(i-1)
   album.appendChild(img)
 }
 
-function openViewer(i) {
-  index = i
-  viewer.style.display = 'block'
-  imageWrap.innerHTML = ''
-  currentSlide = null
-  showImage(index, 0)
+function open(i){
+  index=i
+  viewer.style.display='block'
+  slides.innerHTML=''
+  activeSlide=null
+  show(index,0)
 }
 
-closeBtn.onclick = () => {
-  viewer.style.display = 'none'
-  imageWrap.innerHTML = ''
+closeBtn.onclick=()=>{
+  viewer.style.display='none'
+  slides.innerHTML=''
 }
 
-function showImage(i, dir) {
-  const num = String(i + 1).padStart(2, '0')
+/* ===== PREVIEW – FIX LỖI TRƯỢT ===== */
+function show(i,dir){
+  const num=String(i+1).padStart(2,'0')
 
-  const slide = document.createElement('div')
-  slide.className = 'slide'
-  slide.style.transform = `translateX(${dir * 100}%)`
+  const slide=document.createElement('div')
+  slide.className='slide'
+  slide.style.transform=`translateX(${dir*100}%)`
 
-  const img = document.createElement('img')
-  img.src = `images/${num}.jpg`
-
+  const img=document.createElement('img')
+  img.src=`images/${num}.jpg`
   slide.appendChild(img)
-  imageWrap.appendChild(slide)
 
-  requestAnimationFrame(() => {
-    slide.style.transform = 'translateX(0)'
+  slides.appendChild(slide)
+
+  requestAnimationFrame(()=>{
+    slide.style.transform='translateX(0)'
   })
 
-  if (currentSlide) {
-    currentSlide.style.transform = `translateX(${-dir * 100}%)`
-    setTimeout(() => currentSlide.remove(), 450)
+  if(activeSlide){
+    activeSlide.style.transform=`translateX(${-dir*100}%)`
+    setTimeout(()=>activeSlide.remove(),450)
   }
 
-  currentSlide = slide
+  activeSlide=slide
   resetTransform()
-  counter.textContent = `${index + 1}/${totalImages}`
+  counter.textContent=`${i+1}/${TOTAL}`
 }
 
-function next() {
-  index = (index + 1) % totalImages
-  showImage(index, 1)
+function next(){
+  index=(index+1)%TOTAL
+  show(index,1)
 }
 
-function prev() {
-  index = (index - 1 + totalImages) % totalImages
-  showImage(index, -1)
+function prev(){
+  index=(index-1+TOTAL)%TOTAL
+  show(index,-1)
 }
 
-function resetTransform() {
-  scale = 1
-  x = 0
-  y = 0
-  updateTransform()
+/* ===== ZOOM / PAN ===== */
+function resetTransform(){
+  scale=1;x=0;y=0
+  update()
 }
 
-function updateTransform() {
-  if (!currentSlide) return
-  const img = currentSlide.querySelector('img')
-  img.style.transform = `translate(${x}px, ${y}px) scale(${scale})`
+function update(){
+  if(!activeSlide) return
+  const img=activeSlide.querySelector('img')
+  img.style.transform=`translate(${x}px,${y}px) scale(${scale})`
 }
 
-// chuột
-viewer.addEventListener('wheel', e => {
+viewer.addEventListener('wheel',e=>{
   e.preventDefault()
-  scale += e.deltaY < 0 ? 0.1 : -0.1
-  scale = Math.min(Math.max(scale, 1), 4)
-  updateTransform()
-}, { passive: false })
+  scale+=e.deltaY<0?0.1:-0.1
+  scale=Math.min(Math.max(scale,1),4)
+  update()
+},{passive:false})
 
-viewer.addEventListener('mousedown', e => {
-  if (scale === 1) return
-  dragging = true
-  startX = e.clientX - x
-  startY = e.clientY - y
+viewer.addEventListener('mousedown',e=>{
+  if(scale===1) return
+  dragging=true
+  sx=e.clientX-x
+  sy=e.clientY-y
 })
 
-window.addEventListener('mousemove', e => {
-  if (!dragging) return
-  x = e.clientX - startX
-  y = e.clientY - startY
-  updateTransform()
+window.addEventListener('mousemove',e=>{
+  if(!dragging) return
+  x=e.clientX-sx
+  y=e.clientY-sy
+  update()
 })
 
-window.addEventListener('mouseup', () => dragging = false)
+window.addEventListener('mouseup',()=>dragging=false)
 
-// touch
-let startDist = 0
+/* ===== TOUCH ===== */
+let startDist=0
+let swipeX=0
 
-viewer.addEventListener('touchstart', e => {
-  if (e.touches.length === 2) {
-    startDist = getDist(e.touches)
+viewer.addEventListener('touchstart',e=>{
+  if(e.touches.length===2){
+    startDist=dist(e.touches)
   }
-  if (e.touches.length === 1 && scale > 1) {
-    dragging = true
-    startX = e.touches[0].clientX - x
-    startY = e.touches[0].clientY - y
+  if(e.touches.length===1){
+    swipeX=e.touches[0].clientX
+    if(scale>1){
+      dragging=true
+      sx=e.touches[0].clientX-x
+      sy=e.touches[0].clientY-y
+    }
   }
 })
 
-viewer.addEventListener('touchmove', e => {
+viewer.addEventListener('touchmove',e=>{
   e.preventDefault()
-  if (e.touches.length === 2) {
-    const dist = getDist(e.touches)
-    scale *= dist / startDist
-    scale = Math.min(Math.max(scale, 1), 4)
-    startDist = dist
-    updateTransform()
+  if(e.touches.length===2){
+    const d=dist(e.touches)
+    scale*=d/startDist
+    scale=Math.min(Math.max(scale,1),4)
+    startDist=d
+    update()
   }
-  if (dragging && e.touches.length === 1) {
-    x = e.touches[0].clientX - startX
-    y = e.touches[0].clientY - startY
-    updateTransform()
+  if(dragging && e.touches.length===1){
+    x=e.touches[0].clientX-sx
+    y=e.touches[0].clientY-sy
+    update()
   }
-}, { passive: false })
+},{passive:false})
 
-viewer.addEventListener('touchend', () => dragging = false)
+viewer.addEventListener('touchend',e=>{
+  dragging=false
+  if(scale>1) return
+  const dx=e.changedTouches[0].clientX-swipeX
+  if(dx>60) prev()
+  if(dx<-60) next()
+})
 
-function getDist(t) {
+function dist(t){
   return Math.hypot(
-    t[0].clientX - t[1].clientX,
-    t[0].clientY - t[1].clientY
+    t[0].clientX-t[1].clientX,
+    t[0].clientY-t[1].clientY
   )
 }
 
-// vuốt đổi ảnh
-let swipeStartX = 0
-
-viewer.addEventListener('touchstart', e => {
-  if (e.touches.length === 1 && scale === 1) {
-    swipeStartX = e.touches[0].clientX
-  }
-})
-
-viewer.addEventListener('touchend', e => {
-  if (scale > 1) return
-  const dx = e.changedTouches[0].clientX - swipeStartX
-  if (dx > 60) prev()
-  if (dx < -60) next()
-})
-
-// phím
-window.addEventListener('keydown', e => {
-  if (viewer.style.display !== 'block') return
-  if (e.key === 'ArrowRight') next()
-  if (e.key === 'ArrowLeft') prev()
-  if (e.key === 'Escape') closeBtn.click()
+/* ===== KEY ===== */
+window.addEventListener('keydown',e=>{
+  if(viewer.style.display!=='block')return
+  if(e.key==='ArrowRight')next()
+  if(e.key==='ArrowLeft')prev()
+  if(e.key==='Escape')closeBtn.click()
 })
 </script>
 
