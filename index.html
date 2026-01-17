@@ -91,7 +91,7 @@ header h1{font-size:18px;margin:0}
   top:70px;
   left:0;
   right:0;
-  bottom:100px;
+  bottom:120px; /* strip 100px + 20px gap */
   display:flex;
   justify-content:center;
   align-items:center;
@@ -183,6 +183,7 @@ const strip=document.getElementById('thumbStrip')
 let index=0,scale=1,x=0,y=0
 let drag=false,startX=0,startY=0
 let anim=false,lastTap=0
+let isPinching=false
 
 for(let i=1;i<=total;i++){
   const n=String(i).padStart(2,'0')
@@ -232,7 +233,7 @@ function load(){
 }
 
 function slide(d){
-  if(anim)return
+  if(anim || scale!==1 || isPinching)return
   anim=true
   img.style.transform=`translateX(${-d*120}px) scale(${scale})`
   img.style.opacity=0
@@ -292,12 +293,7 @@ viewer.addEventListener('wheel',e=>{
   update()
 },{passive:false})
 
-viewer.addEventListener('dblclick',()=>{
-  scale=scale===1?2:1
-  x=y=0
-  update()
-})
-
+/* ===== DOUBLE TAP ===== */
 viewer.addEventListener('touchend',e=>{
   const now=Date.now()
   if(now-lastTap<300){
@@ -307,7 +303,7 @@ viewer.addEventListener('touchend',e=>{
   }
   lastTap=now
 })
-
+/* ===== PAN PC ===== */
 viewer.addEventListener('mousedown',e=>{
   if(scale===1)return
   drag=true
@@ -322,7 +318,9 @@ window.addEventListener('mousemove',e=>{
 })
 window.addEventListener('mouseup',()=>drag=false)
 
+/* ===== TOUCH ===== */
 let dist=0,swipeX=0
+
 viewer.addEventListener('touchstart',e=>{
   if(e.touches.length===1){
     swipeX=e.touches[0].clientX
@@ -333,6 +331,7 @@ viewer.addEventListener('touchstart',e=>{
     }
   }
   if(e.touches.length===2){
+    isPinching=true
     dist=Math.hypot(
       e.touches[0].clientX-e.touches[1].clientX,
       e.touches[0].clientY-e.touches[1].clientY
@@ -361,6 +360,8 @@ viewer.addEventListener('touchmove',e=>{
 
 viewer.addEventListener('touchend',e=>{
   drag=false
+  isPinching=false
+
   if(scale===1){
     let dx=e.changedTouches[0].clientX-swipeX
     if(dx>60)slide(-1)
@@ -368,10 +369,12 @@ viewer.addEventListener('touchend',e=>{
   }
 })
 
+/* ===== STRIP TOUCH FIX ===== */
 strip.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true})
 strip.addEventListener('touchmove',e=>e.stopPropagation(),{passive:true})
 strip.addEventListener('touchend',e=>e.stopPropagation(),{passive:true})
 
+/* ===== DRAG STRIP PC ===== */
 let isDown=false,startXStrip=0,scrollLeftStrip=0
 strip.addEventListener('mousedown',e=>{
   isDown=true
@@ -388,6 +391,7 @@ strip.addEventListener('mousemove',e=>{
   strip.scrollLeft=scrollLeftStrip-walk
 })
 
+/* ===== CONTROLS ===== */
 document.getElementById('prev').onclick=()=>slide(-1)
 document.getElementById('next').onclick=()=>slide(1)
 document.getElementById('close').onclick=close
