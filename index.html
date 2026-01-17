@@ -2,232 +2,251 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Album Preview</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Album xem trước</title>
 
 <style>
-html,body{
-  margin:0;
-  background:#000;
-  font-family:Arial;
-  user-select:none;
+*{box-sizing:border-box}
+body{
+    margin:0;
+    background:#000;
+    color:#fff;
+    font-family:Arial,sans-serif;
+    overflow:hidden
 }
+header{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px 16px;
+    background:#111
+}
+header img{height:36px}
+header h1{font-size:18px;margin:0}
 
 #gallery{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
-  gap:10px;
-  padding:10px;
+    padding:12px;
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+    gap:12px;
+    overflow:auto;
+    height:calc(100vh - 56px)
 }
-
-#gallery img{
-  width:100%;
-  aspect-ratio:1/1;
-  object-fit:cover;
-  cursor:pointer;
-  border-radius:6px;
+.thumb{
+    cursor:pointer;
+    background:#222;
+    border-radius:8px;
+    overflow:hidden
+}
+.thumb img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block
 }
 
 #viewer{
-  position:fixed;
-  inset:0;
-  background:#000;
-  display:none;
-  overflow:hidden;
-  touch-action:none;
+    position:fixed;
+    inset:0;
+    background:#000;
+    display:none;
+    z-index:100
 }
+#viewer.active{display:block}
 
-#slider{
-  display:flex;
-  height:100%;
-  transition:transform .45s cubic-bezier(.4,0,.2,1);
-}
-
-.slide{
-  width:100vw;
-  height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-}
-
-.slide img{
-  max-width:100%;
-  max-height:100%;
-  transform-origin:center;
-  cursor:grab;
+#viewer img{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%) scale(1);
+    max-width:none;
+    max-height:none;
+    user-select:none;
+    cursor:grab;
+    transition:transform .3s ease
 }
 
 .nav{
-  position:fixed;
-  top:50%;
-  transform:translateY(-50%);
-  font-size:48px;
-  color:#fff;
-  cursor:pointer;
-  opacity:.6;
+    position:absolute;
+    top:50%;
+    transform:translateY(-50%);
+    font-size:40px;
+    color:#ccc;
+    padding:10px;
+    cursor:pointer;
+    user-select:none
 }
+.nav:hover{color:#fff}
 #prev{left:10px}
 #next{right:10px}
 
 #close{
-  position:fixed;
-  top:12px;
-  right:16px;
-  font-size:28px;
-  color:#fff;
-  cursor:pointer;
+    position:absolute;
+    top:10px;
+    right:14px;
+    font-size:28px;
+    cursor:pointer
 }
 
 #counter{
-  position:fixed;
-  bottom:12px;
-  right:16px;
-  color:#fff;
-  font-size:14px;
+    position:absolute;
+    bottom:12px;
+    right:16px;
+    font-size:14px;
+    opacity:.8
 }
 </style>
 </head>
 
 <body>
 
+<header id="header">
+    <img src="logo.png" alt="logo">
+    <h1>Album xem trước</h1>
+</header>
+
 <div id="gallery"></div>
 
 <div id="viewer">
-  <div id="slider"></div>
-  <div id="prev" class="nav">◀</div>
-  <div id="next" class="nav">▶</div>
-  <div id="close">✕</div>
-  <div id="counter"></div>
+    <div id="close">✕</div>
+    <div id="prev" class="nav">◀</div>
+    <div id="next" class="nav">▶</div>
+    <div id="counter"></div>
+    <img id="viewerImg">
 </div>
 
 <script>
-const TOTAL=20
-const FOLDER="images/"
-const gallery=document.getElementById("gallery")
-const viewer=document.getElementById("viewer")
-const slider=document.getElementById("slider")
-const counter=document.getElementById("counter")
+const totalImages = 20
+const gallery = document.getElementById('gallery')
+const viewer = document.getElementById('viewer')
+const viewerImg = document.getElementById('viewerImg')
+const counter = document.getElementById('counter')
+const header = document.getElementById('header')
 
-let index=0,scale=1,panX=0,panY=0
-let isPan=false,startX=0,startY=0
-let startDist=0,startScale=1
+let index = 0
+let scale = 1
+let x = 0, y = 0
+let dragging = false
+let startX, startY
 
-/* LOAD */
-for(let i=1;i<=TOTAL;i++){
-  const src=FOLDER+String(i).padStart(2,"0")+".jpg"
-
-  const thumb=document.createElement("img")
-  thumb.src=src
-  thumb.onclick=()=>openViewer(i-1)
-  gallery.appendChild(thumb)
-
-  const slide=document.createElement("div")
-  slide.className="slide"
-  const img=document.createElement("img")
-  img.src=src
-  slide.appendChild(img)
-  slider.appendChild(slide)
+for(let i=1;i<=totalImages;i++){
+    const num = String(i).padStart(2,'0')
+    const div = document.createElement('div')
+    div.className='thumb'
+    div.innerHTML=`<img src="images/${num}.jpg">`
+    div.onclick=()=>openViewer(i-1)
+    gallery.appendChild(div)
 }
 
-const images=document.querySelectorAll(".slide img")
-
 function openViewer(i){
-  index=i
-  viewer.style.display="block"
-  gallery.style.display="none"
-  update()
+    index=i
+    viewer.classList.add('active')
+    header.style.display='none'
+    gallery.style.display='none'
+    resetTransform()
+    loadImage()
 }
 
 function closeViewer(){
-  viewer.style.display="none"
-  gallery.style.display="grid"
+    viewer.classList.remove('active')
+    header.style.display='flex'
+    gallery.style.display='grid'
 }
 
-function update(){
-  slider.style.transform=`translateX(${-index*innerWidth}px)`
-  counter.textContent=`${index+1}/${TOTAL}`
-  resetTransform()
+function loadImage(dir=0){
+    viewerImg.style.transition='none'
+    index=(index+totalImages)%totalImages
+    viewerImg.src=`images/${String(index+1).padStart(2,'0')}.jpg`
+    counter.textContent=`${index+1}/${totalImages}`
+    requestAnimationFrame(()=>{
+        viewerImg.style.transition='transform .3s ease'
+    })
 }
 
 function resetTransform(){
-  scale=1;panX=panY=0
-  apply()
+    scale=1;x=0;y=0
+    updateTransform()
 }
 
-function apply(){
-  images[index].style.transform=`translate(${panX}px,${panY}px) scale(${scale})`
+function updateTransform(){
+    viewerImg.style.transform=
+    `translate(calc(-50% + ${x}px), calc(-50% + ${y}px)) scale(${scale})`
 }
 
-/* NAV */
-document.getElementById("next").onclick=()=>{if(index<TOTAL-1){index++;update()}}
-document.getElementById("prev").onclick=()=>{if(index>0){index--;update()}}
-document.getElementById("close").onclick=closeViewer
+document.getElementById('close').onclick=closeViewer
+document.getElementById('prev').onclick=()=>{resetTransform();index--;loadImage()}
+document.getElementById('next').onclick=()=>{resetTransform();index++;loadImage()}
 
-document.addEventListener("keydown",e=>{
-  if(viewer.style.display!=="block")return
-  if(e.key==="ArrowRight")next.click()
-  if(e.key==="ArrowLeft")prev.click()
-  if(e.key==="Escape")closeViewer()
+document.addEventListener('keydown',e=>{
+    if(!viewer.classList.contains('active'))return
+    if(e.key==='ArrowLeft'){resetTransform();index--;loadImage()}
+    if(e.key==='ArrowRight'){resetTransform();index++;loadImage()}
+    if(e.key==='Escape')closeViewer()
 })
 
-/* ZOOM + PAN PC */
-images.forEach(img=>{
-  img.onwheel=e=>{
+viewerImg.addEventListener('wheel',e=>{
     e.preventDefault()
-    scale+=e.deltaY<0?0.15:-0.15
-    scale=Math.min(Math.max(1,scale),4)
-    apply()
-  }
-
-  img.onmousedown=e=>{
-    if(scale<=1)return
-    isPan=true
-    startX=e.clientX-panX
-    startY=e.clientY-panY
-  }
-})
-
-window.onmousemove=e=>{
-  if(!isPan)return
-  panX=e.clientX-startX
-  panY=e.clientY-startY
-  apply()
-}
-window.onmouseup=()=>isPan=false
-
-/* MOBILE */
-viewer.addEventListener("touchstart",e=>{
-  if(e.touches.length===1 && scale>1){
-    startX=e.touches[0].clientX-panX
-    startY=e.touches[0].clientY-panY
-  }
-  if(e.touches.length===2){
-    startDist=Math.hypot(
-      e.touches[0].clientX-e.touches[1].clientX,
-      e.touches[0].clientY-e.touches[1].clientY
-    )
-    startScale=scale
-  }
-})
-
-viewer.addEventListener("touchmove",e=>{
-  e.preventDefault()
-  if(e.touches.length===1 && scale>1){
-    panX=e.touches[0].clientX-startX
-    panY=e.touches[0].clientY-startY
-    apply()
-  }
-  if(e.touches.length===2){
-    const dist=Math.hypot(
-      e.touches[0].clientX-e.touches[1].clientX,
-      e.touches[0].clientY-e.touches[1].clientY
-    )
-    scale=startScale*dist/startDist
-    scale=Math.min(Math.max(1,scale),4)
-    apply()
-  }
+    scale+=e.deltaY*-0.001
+    scale=Math.min(Math.max(1,scale),5)
+    updateTransform()
 },{passive:false})
+
+viewerImg.addEventListener('mousedown',e=>{
+    if(scale<=1)return
+    dragging=true
+    startX=e.clientX-x
+    startY=e.clientY-y
+    viewerImg.style.cursor='grabbing'
+})
+
+window.addEventListener('mouseup',()=>{
+    dragging=false
+    viewerImg.style.cursor='grab'
+})
+
+window.addEventListener('mousemove',e=>{
+    if(!dragging)return
+    x=e.clientX-startX
+    y=e.clientY-startY
+    updateTransform()
+})
+
+// Touch
+let tStartDist=0
+viewerImg.addEventListener('touchstart',e=>{
+    if(e.touches.length===2){
+        tStartDist=Math.hypot(
+            e.touches[0].clientX-e.touches[1].clientX,
+            e.touches[0].clientY-e.touches[1].clientY
+        )
+    }
+    if(e.touches.length===1 && scale>1){
+        dragging=true
+        startX=e.touches[0].clientX-x
+        startY=e.touches[0].clientY-y
+    }
+},{passive:false})
+
+viewerImg.addEventListener('touchmove',e=>{
+    e.preventDefault()
+    if(e.touches.length===2){
+        const d=Math.hypot(
+            e.touches[0].clientX-e.touches[1].clientX,
+            e.touches[0].clientY-e.touches[1].clientY
+        )
+        scale*=d/tStartDist
+        scale=Math.min(Math.max(1,scale),5)
+        tStartDist=d
+        updateTransform()
+    }
+    if(dragging && e.touches.length===1){
+        x=e.touches[0].clientX-startX
+        y=e.touches[0].clientY-startY
+        updateTransform()
+    }
+},{passive:false})
+
+viewerImg.addEventListener('touchend',()=>dragging=false)
 </script>
 
 </body>
