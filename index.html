@@ -93,7 +93,7 @@ header h1{font-size:18px;margin:0}
 #mainImage{
   max-width:100%;
   max-height:100%;
-  transition:transform .35s ease,opacity .25s ease;
+  transition:transform .25s ease,opacity .25s ease;
   transform-origin:center;
   user-select:none;
   pointer-events:none
@@ -238,7 +238,7 @@ function slide(d){
     img.style.transition='none'
     img.style.transform=`translateX(${d*120}px)`
     requestAnimationFrame(()=>{
-      img.style.transition='transform .35s ease,opacity .25s ease'
+      img.style.transition='transform .25s ease,opacity .25s ease'
       img.style.transform='translate(0,0)'
       img.style.opacity=1
       anim=false
@@ -279,6 +279,15 @@ function reset(){
 function update(){
   img.style.transform=`translate(${x}px,${y}px) scale(${scale})`
 }
+
+/* ===== ZOOM MOUSE WHEEL (NEW) ===== */
+viewer.addEventListener('wheel',e=>{
+  e.preventDefault()
+  const delta = e.deltaY < 0 ? 0.1 : -0.1
+  scale += delta
+  scale = Math.max(1, Math.min(scale, 4))
+  update()
+},{passive:false})
 
 /* ===== DOUBLE TAP / CLICK ===== */
 viewer.addEventListener('dblclick',()=>{
