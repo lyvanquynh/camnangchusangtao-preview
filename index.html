@@ -316,20 +316,33 @@ viewer.addEventListener('dblclick', e => {
   update()
 })
 
-/* ===== PAN PC ===== */
-viewer.addEventListener('mousedown',e=>{
-  if(scale===1)return
-  drag=true
-  startX=e.clientX-x
-  startY=e.clientY-y
+/* ===== PAN PC (FIX DÍNH CHUỘT) ===== */
+viewer.addEventListener('mousedown', e => {
+  if (scale === 1) return
+  drag = true
+  startX = e.clientX - x
+  startY = e.clientY - y
 })
-window.addEventListener('mousemove',e=>{
-  if(!drag)return
-  x=e.clientX-startX
-  y=e.clientY-startY
+
+window.addEventListener('mousemove', e => {
+  if (!drag) return
+  x = e.clientX - startX
+  y = e.clientY - startY
   update()
 })
-window.addEventListener('mouseup',()=>drag=false)
+
+window.addEventListener('mouseup', () => {
+  drag = false
+})
+
+window.addEventListener('blur', () => {
+  drag = false
+})
+
+viewer.addEventListener('mouseleave', () => {
+  drag = false
+})
+
 
 /* ===== TOUCH ===== */
 let dist=0,swipeX=0
