@@ -32,32 +32,33 @@ header h1{font-size:18px;margin:0}
   height:calc(100vh - 60px);
   overflow-y:auto
 }
-/* ===== Layout album cho MOBILE ===== */
+/* ========== MOBILE FULL SIZE THUMBNAILS ========== */
 @media (max-width: 768px) {
   body {
-    overflow-y: auto;
+    overflow-y: auto !important;
   }
 
   #album {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-    padding: 16px;
-    overflow-y: auto;
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+    padding: 10px !important;
+    height: auto !important;
+    overflow-y: auto !important;
   }
 
   .thumb {
-    background: #111;
-    border-radius: 12px;
-    padding: 0;
-    overflow: visible;
+    width: 100% !important;
+    background: #000 !important;
+    border-radius: 12px !important;
+    padding: 0 !important;
   }
 
   .thumb img {
-    width: 100%;
-    height: auto;
-    object-fit: contain;   /* KHÔNG CROP */
-    display: block;
+    width: 100% !important;
+    height: auto !important;
+    object-fit: contain !important;
+    display: block !important;
   }
 }
 
