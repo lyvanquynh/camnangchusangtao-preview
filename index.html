@@ -10,8 +10,8 @@ html,body{
   margin:0;
   background:#000;
   color:#fff;
-  overflow-x:hidden;   /* chỉ khóa ngang */
-  overflow-y:auto;    /* cho phép cuộn dọc */
+  overflow-x:hidden;
+  overflow-y:auto;
   font-family:Arial
 }
 
@@ -33,7 +33,7 @@ header h1{font-size:18px;margin:0}
   height:calc(100vh - 60px);
   overflow-y:auto
 }
-/* ========== MOBILE FULL SIZE THUMBNAILS ========== */
+
 @media (max-width: 768px) {
   body {
     overflow-y: auto !important;
@@ -122,7 +122,7 @@ header h1{font-size:18px;margin:0}
   top:70px;
   left:0;
   right:0;
-  bottom:120px; /* strip 100px + 20px gap */
+  bottom:120px;
   display:flex;
   justify-content:center;
   align-items:center;
@@ -136,7 +136,8 @@ header h1{font-size:18px;margin:0}
   transform-origin:center;
   user-select:none;
   pointer-events:none;
-  object-fit:contain
+  object-fit:contain;
+  will-change: transform;
 }
 
 /* ===== THUMB STRIP ===== */
@@ -213,19 +214,34 @@ const strip=document.getElementById('thumbStrip')
 
 let index=0,scale=1,x=0,y=0
 let drag=false,startX=0,startY=0
-let anim=false,lastTap=0
+let anim=false
 let isPinching=false
+
+/* ===== PERF OPT ===== */
+let lastUpdate = 0
+const preloadCache = new Set()
+let stripWidth = 0
+
+window.addEventListener('resize', ()=> {
+  stripWidth = strip.getBoundingClientRect().width
+})
 
 for(let i=1;i<=total;i++){
   const n=String(i).padStart(2,'0')
 
   const d=document.createElement('div')
   d.className='thumb'
-  d.innerHTML=`<img src="images/${n}.jpg">`
+
+  const imgThumb = document.createElement('img')
+  imgThumb.loading = 'lazy'
+  imgThumb.src = `images/${n}.jpg`
+  d.appendChild(imgThumb)
+
   d.onclick=()=>open(i-1)
   album.appendChild(d)
 
   const t=document.createElement('img')
+  t.loading='lazy'
   t.src=`images/${n}.jpg`
   t.onclick=()=>jump(i-1)
   strip.appendChild(t)
@@ -235,8 +251,11 @@ function preload(i){
   [-1,1].forEach(o=>{
     let n=i+o
     if(n>=0&&n<total){
+      const key=n+1
+      if(preloadCache.has(key)) return
       const im=new Image()
-      im.src=`images/${String(n+1).padStart(2,'0')}.jpg`
+      im.src=`images/${String(key).padStart(2,'0')}.jpg`
+      preloadCache.add(key)
     }
   })
 }
@@ -289,13 +308,13 @@ function setActive(){
   })
 
   const activeThumb = strip.children[index]
-  const stripRect = strip.getBoundingClientRect()
+  if(!stripWidth) stripWidth = strip.getBoundingClientRect().width
   const thumbRect = activeThumb.getBoundingClientRect()
 
   const offset =
     thumbRect.left -
-    stripRect.left -
-    stripRect.width / 2 +
+    strip.getBoundingClientRect().left -
+    stripWidth / 2 +
     thumbRect.width / 2
 
   strip.scrollLeft += offset
@@ -311,7 +330,11 @@ function reset(){
   scale=1;x=0;y=0
   update()
 }
+
 function update(){
+  const now = performance.now()
+  if(now - lastUpdate < 16) return
+  lastUpdate = now
   img.style.transform=`translate(${x}px,${y}px) scale(${scale})`
 }
 
@@ -319,12 +342,12 @@ function update(){
 viewer.addEventListener('wheel',e=>{
   e.preventDefault()
   const delta = e.deltaY < 0 ? 0.1 : -0.1
-  scale += delta
+  scale = Math.round((scale + delta) * 100) / 100
   scale = Math.max(1, Math.min(scale, 4))
   update()
 },{passive:false})
 
-/* ===== DOUBLE TAP ZOOM (MOBILE – PHÓNG TO / THU NHỎ ỔN ĐỊNH) ===== */
+/* ===== DOUBLE TAP ZOOM MOBILE ===== */
 let lastTapTime = 0
 let lastTapX = 0
 let lastTapY = 0
@@ -342,7 +365,6 @@ viewer.addEventListener('touchend', e => {
   const dy = Math.abs(touch.clientY - lastTapY)
 
   if (delta > 0 && delta < 300 && dx < 30 && dy < 30) {
-    // Nếu đang gần mức thu nhỏ → phóng to
     if (scale <= 1.05) {
       scale = 2
     } else {
@@ -359,8 +381,7 @@ viewer.addEventListener('touchend', e => {
   }
 })
 
-
-/* ===== DOUBLE CLICK ZOOM (PC) ===== */
+/* ===== DOUBLE CLICK PC ===== */
 viewer.addEventListener('dblclick', e => {
   if (scale === 1) {
     scale = 2
@@ -372,7 +393,7 @@ viewer.addEventListener('dblclick', e => {
   update()
 })
 
-/* ===== PAN PC (ỔN ĐỊNH 100%) ===== */
+/* ===== PAN PC ===== */
 let panActive = false
 let panStartX = 0
 let panStartY = 0
@@ -384,13 +405,11 @@ viewer.addEventListener('mousedown', e => {
   panActive = true
   panStartX = e.clientX - x
   panStartY = e.clientY - y
-
   viewer.style.cursor = 'grabbing'
 })
 
 window.addEventListener('mousemove', e => {
   if (!panActive) return
-
   x = e.clientX - panStartX
   y = e.clientY - panStartY
   update()
@@ -405,7 +424,6 @@ window.addEventListener('mouseup', stopPanPC)
 window.addEventListener('blur', stopPanPC)
 document.addEventListener('visibilitychange', stopPanPC)
 viewer.addEventListener('mouseleave', stopPanPC)
-
 
 /* ===== TOUCH ===== */
 let dist=0,swipeX=0
