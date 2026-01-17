@@ -293,16 +293,33 @@ viewer.addEventListener('wheel',e=>{
   update()
 },{passive:false})
 
-/* ===== DOUBLE TAP ===== */
-viewer.addEventListener('touchend',e=>{
-  const now=Date.now()
-  if(now-lastTap<300){
-    scale=scale===1?2:1
-    x=y=0
+/* ===== DOUBLE TAP (FIX CHUẨN) ===== */
+let lastTapTime = 0
+
+viewer.addEventListener('touchend', e => {
+  // Chỉ xử lý khi là 1 ngón tay
+  if (e.changedTouches.length !== 1) return
+  if (isPinching) return
+  if (drag) return
+
+  const now = Date.now()
+  const delta = now - lastTapTime
+
+  if (delta > 0 && delta < 300) {
+    if (scale === 1) {
+      scale = 2
+    } else {
+      scale = 1
+      x = 0
+      y = 0
+    }
     update()
+    lastTapTime = 0
+  } else {
+    lastTapTime = now
   }
-  lastTap=now
 })
+
 
 /* ===== DOUBLE CLICK ZOOM (PC) ===== */
 viewer.addEventListener('dblclick', e => {
