@@ -111,20 +111,26 @@ header h1{font-size:18px;margin:0}
   height:90px;
   background:rgba(0,0,0,.75);
   display:flex;
+  justify-content:center;      /* căn giữa */
+  align-items:center;
   gap:8px;
-  padding:8px;
-  overflow-x:auto;
-  z-index:20
+  padding:8px 0;
+  overflow-x:auto;             /* cho phép trượt ngang */
+  overflow-y:hidden;
+  z-index:20;
+  scroll-behavior:smooth;
 }
-#thumbStrip img{
-  height:100%;
-  cursor:pointer;
-  opacity:.5;
-  border-radius:4px;
+
+#thumbStrip::-webkit-scrollbar{
+  height:6px;
 }
-#thumbStrip img.active{
-  opacity:1;
-  outline:2px solid #0af
+#thumbStrip::-webkit-scrollbar-thumb{
+  background:#555;
+  border-radius:3px;
+}
+#thumbStrip{
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
 }
 </style>
 </head>
@@ -240,6 +246,18 @@ function setActive(){
   [...strip.children].forEach((t,i)=>{
     t.classList.toggle('active',i===index)
   })
+
+  const activeThumb = strip.children[index]
+  const stripRect = strip.getBoundingClientRect()
+  const thumbRect = activeThumb.getBoundingClientRect()
+
+  const offset =
+    thumbRect.left -
+    stripRect.left -
+    stripRect.width / 2 +
+    thumbRect.width / 2
+
+  strip.scrollLeft += offset
 }
 function jump(i){
   index=i
