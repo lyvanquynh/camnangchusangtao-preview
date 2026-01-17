@@ -316,7 +316,23 @@ viewer.addEventListener('dblclick', e => {
   update()
 })
 
-/* ===== PAN PC (CHUẨN – KHÔNG DÍNH – PAN ĐƯỢC KHI ZOOM) ===== */
+/* ===== PAN PC (MƯỢT + KHÔNG DÍNH) ===== */
+let targetX = 0
+let targetY = 0
+let rafId = null
+
+function smoothUpdate() {
+  x += (targetX - x) * 0.25
+  y += (targetY - y) * 0.25
+  update()
+
+  if (Math.abs(targetX - x) > 0.1 || Math.abs(targetY - y) > 0.1) {
+    rafId = requestAnimationFrame(smoothUpdate)
+  } else {
+    rafId = null
+  }
+}
+
 viewer.addEventListener('mousedown', e => {
   if (scale <= 1) return
   if (e.button !== 0) return
@@ -324,31 +340,34 @@ viewer.addEventListener('mousedown', e => {
   drag = true
   startX = e.clientX - x
   startY = e.clientY - y
+
+  targetX = x
+  targetY = y
 })
 
 window.addEventListener('mousemove', e => {
   if (!drag) return
 
-  // Nếu không còn giữ chuột trái → dừng pan ngay
   if ((e.buttons & 1) !== 1) {
-    drag = false
+    stopPanPC()
     return
   }
 
-  x = e.clientX - startX
-  y = e.clientY - startY
-  update()
+  targetX = e.clientX - startX
+  targetY = e.clientY - startY
+
+  if (!rafId) smoothUpdate()
 })
 
 function stopPanPC() {
   drag = false
+  rafId = null
 }
 
 window.addEventListener('mouseup', stopPanPC)
 window.addEventListener('blur', stopPanPC)
 document.addEventListener('mouseleave', stopPanPC)
 document.addEventListener('visibilitychange', stopPanPC)
-
 
 /* ===== TOUCH ===== */
 let dist=0,swipeX=0
