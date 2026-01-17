@@ -316,9 +316,10 @@ viewer.addEventListener('dblclick', e => {
   update()
 })
 
-/* ===== PAN PC (FIX DÍNH CHUỘT) ===== */
+/* ===== PAN PC (FIX DỨT ĐIỂM DÍNH CHUỘT) ===== */
 viewer.addEventListener('mousedown', e => {
   if (scale === 1) return
+  if (e.button !== 0) return        // chỉ chuột trái
   drag = true
   startX = e.clientX - x
   startY = e.clientY - y
@@ -326,23 +327,26 @@ viewer.addEventListener('mousedown', e => {
 
 window.addEventListener('mousemove', e => {
   if (!drag) return
+
+  // nếu không còn giữ chuột trái → ngắt pan ngay
+  if (e.buttons !== 1) {
+    drag = false
+    return
+  }
+
   x = e.clientX - startX
   y = e.clientY - startY
   update()
 })
 
-window.addEventListener('mouseup', () => {
+function stopPan() {
   drag = false
-})
+}
 
-window.addEventListener('blur', () => {
-  drag = false
-})
-
-viewer.addEventListener('mouseleave', () => {
-  drag = false
-})
-
+window.addEventListener('mouseup', stopPan)
+window.addEventListener('blur', stopPan)
+window.addEventListener('mouseleave', stopPan)
+document.addEventListener('visibilitychange', stopPan)
 
 /* ===== TOUCH ===== */
 let dist=0,swipeX=0
