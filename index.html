@@ -3,111 +3,128 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Album Offline</title>
+<title>Album Preview</title>
 
 <style>
-html, body {
-  margin: 0;
-  background: #000;
-  color: #fff;
-  font-family: Arial, sans-serif;
-  overflow: hidden;
+html,body{
+  margin:0;
+  background:#000;
+  color:#fff;
+  overflow:hidden;
+  font-family:Arial
 }
 
 /* ===== HEADER ===== */
-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 20px;
+header{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:10px 18px
 }
-header img {
-  height: 32px;
-}
-header h1 {
-  font-size: 18px;
-  margin: 0;
-}
+header img{height:32px}
+header h1{font-size:18px;margin:0}
 
 /* ===== ALBUM ===== */
-#album {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 14px;
-  padding: 14px;
-  overflow-y: auto;
-  height: calc(100vh - 60px);
+#album{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:14px;
+  padding:14px;
+  height:calc(100vh - 60px);
+  overflow-y:auto
 }
-
-.thumb {
-  background: #111;
-  border-radius: 8px;
-  overflow: hidden;
-  cursor: pointer;
+.thumb{
+  background:#111;
+  border-radius:8px;
+  overflow:hidden;
+  cursor:pointer
 }
-.thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  background: #000;
+.thumb img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  background:#000
 }
 
 /* ===== VIEWER ===== */
-#viewer {
-  position: fixed;
-  inset: 0;
-  background: #000;
-  display: none;
-  z-index: 999;
+#viewer{
+  position:fixed;
+  inset:0;
+  background:#000;
+  display:none;
+  z-index:999
 }
 
-#imageWrap {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  touch-action: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* always on top */
+.top-controls{
+  position:absolute;
+  top:10px;
+  left:0;
+  right:0;
+  display:flex;
+  justify-content:space-between;
+  padding:0 16px;
+  z-index:20;
+  pointer-events:none
+}
+.top-controls div{
+  font-size:34px;
+  color:#aaa;
+  pointer-events:auto;
+  cursor:pointer
 }
 
-#mainImage {
-  max-width: 100%;
-  max-height: 100%;
-  transform-origin: center center;
-  transition: transform 0.35s ease, opacity 0.25s ease;
-  user-select: none;
-  pointer-events: none;
+#counter{
+  position:absolute;
+  top:50px;
+  right:16px;
+  font-size:14px;
+  color:#ccc;
+  z-index:20
 }
 
-/* ===== CONTROLS ===== */
-.btn {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 40px;
-  color: #aaa;
-  cursor: pointer;
-  user-select: none;
-  padding: 10px;
+/* ===== IMAGE ===== */
+#imageWrap{
+  width:100%;
+  height:100%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  overflow:hidden;
+  touch-action:none
 }
-#prev { left: 10px; }
-#next { right: 10px; }
-
-#close {
-  position: absolute;
-  top: 12px;
-  right: 16px;
-  font-size: 28px;
-  cursor: pointer;
+#mainImage{
+  max-width:100%;
+  max-height:100%;
+  transition:transform .35s ease,opacity .25s ease;
+  transform-origin:center;
+  user-select:none;
+  pointer-events:none
 }
 
-#counter {
-  position: absolute;
-  bottom: 12px;
-  right: 16px;
-  font-size: 14px;
-  color: #ccc;
+/* ===== THUMB STRIP ===== */
+#thumbStrip{
+  position:absolute;
+  bottom:0;
+  left:0;
+  right:0;
+  height:90px;
+  background:rgba(0,0,0,.75);
+  display:flex;
+  gap:8px;
+  padding:8px;
+  overflow-x:auto;
+  z-index:20
+}
+#thumbStrip img{
+  height:100%;
+  cursor:pointer;
+  opacity:.5;
+  border-radius:4px;
+}
+#thumbStrip img.active{
+  opacity:1;
+  outline:2px solid #0af
 }
 </style>
 </head>
@@ -115,194 +132,211 @@ header h1 {
 <body>
 
 <header>
-  <img src="logo.png" alt="">
-  <h1>Album Off</h1>
+  <img src="logo.png">
+  <h1>Album xem trước</h1>
 </header>
 
 <div id="album"></div>
 
 <div id="viewer">
-  <div id="close">✕</div>
-  <div id="prev" class="btn">◀</div>
-  <div id="next" class="btn">▶</div>
+  <div class="top-controls">
+    <div id="prev">◀</div>
+    <div id="close">✕</div>
+    <div id="next">▶</div>
+  </div>
   <div id="counter"></div>
+
   <div id="imageWrap">
     <img id="mainImage">
   </div>
+
+  <div id="thumbStrip"></div>
 </div>
 
 <script>
-const totalImages = 20
-const album = document.getElementById('album')
-const viewer = document.getElementById('viewer')
-const img = document.getElementById('mainImage')
-const counter = document.getElementById('counter')
+const total=20
+const album=document.getElementById('album')
+const viewer=document.getElementById('viewer')
+const img=document.getElementById('mainImage')
+const counter=document.getElementById('counter')
+const strip=document.getElementById('thumbStrip')
 
-let index = 0
-let scale = 1
-let x = 0
-let y = 0
-let dragging = false
-let startX = 0
-let startY = 0
-let animating = false
+let index=0,scale=1,x=0,y=0
+let drag=false,startX=0,startY=0
+let anim=false,lastTap=0
 
-/* ===== LOAD ALBUM ===== */
-for (let i = 1; i <= totalImages; i++) {
-  const num = String(i).padStart(2, '0')
-  const div = document.createElement('div')
-  div.className = 'thumb'
-  div.innerHTML = `<img src="images/${num}.jpg">`
-  div.onclick = () => openViewer(i - 1)
-  album.appendChild(div)
+/* ===== ALBUM ===== */
+for(let i=1;i<=total;i++){
+  const n=String(i).padStart(2,'0')
+  const d=document.createElement('div')
+  d.className='thumb'
+  d.innerHTML=`<img src="images/${n}.jpg">`
+  d.onclick=()=>open(i-1)
+  album.appendChild(d)
+
+  const t=document.createElement('img')
+  t.src=`images/${n}.jpg`
+  t.onclick=()=>jump(i-1)
+  strip.appendChild(t)
+}
+
+/* ===== PRELOAD ===== */
+function preload(i){
+  [-1,1].forEach(o=>{
+    let n=i+o
+    if(n>=0&&n<total){
+      const im=new Image()
+      im.src=`images/${String(n+1).padStart(2,'0')}.jpg`
+    }
+  })
 }
 
 /* ===== VIEWER ===== */
-function openViewer(i) {
-  index = i
-  viewer.style.display = 'block'
-  document.body.style.overflow = 'hidden'
-  resetTransform()
-  loadImage()
+function open(i){
+  index=i
+  viewer.style.display='block'
+  document.body.style.overflow='hidden'
+  reset()
+  load()
+}
+function close(){
+  viewer.style.display='none'
+  document.body.style.overflow='auto'
 }
 
-function closeViewer() {
-  viewer.style.display = 'none'
-  document.body.style.overflow = 'auto'
+function load(){
+  img.style.opacity=0
+  const n=String(index+1).padStart(2,'0')
+  img.src=`images/${n}.jpg`
+  counter.textContent=`${index+1}/${total}`
+  setActive()
+  preload(index)
+  requestAnimationFrame(()=>img.style.opacity=1)
 }
 
-function loadImage() {
-  const num = String(index + 1).padStart(2, '0')
-  img.src = `images/${num}.jpg`
-  counter.textContent = `${index + 1}/${totalImages}`
+/* ===== SLIDE ===== */
+function slide(d){
+  if(anim)return
+  anim=true
+  img.style.transform=`translateX(${-d*120}px) scale(${scale})`
+  img.style.opacity=0
+  setTimeout(()=>{
+    index=(index+d+total)%total
+    reset()
+    load()
+    img.style.transition='none'
+    img.style.transform=`translateX(${d*120}px)`
+    requestAnimationFrame(()=>{
+      img.style.transition='transform .35s ease,opacity .25s ease'
+      img.style.transform='translate(0,0)'
+      img.style.opacity=1
+      anim=false
+    })
+  },250)
+}
+
+/* ===== THUMB ===== */
+function setActive(){
+  [...strip.children].forEach((t,i)=>{
+    t.classList.toggle('active',i===index)
+  })
+}
+function jump(i){
+  index=i
+  reset()
+  load()
 }
 
 /* ===== TRANSFORM ===== */
-function resetTransform() {
-  scale = 1
-  x = 0
-  y = 0
-  updateTransform()
+function reset(){
+  scale=1;x=0;y=0
+  update()
+}
+function update(){
+  img.style.transform=`translate(${x}px,${y}px) scale(${scale})`
 }
 
-function updateTransform() {
-  img.style.transform = `translate(${x}px, ${y}px) scale(${scale})`
-}
-
-/* ===== SLIDE EFFECT ===== */
-function slide(dir) {
-  if (animating) return
-  animating = true
-
-  img.style.transition = 'transform 0.35s ease, opacity 0.25s ease'
-  img.style.transform = `translateX(${dir * -120}px) scale(${scale})`
-  img.style.opacity = '0'
-
-  setTimeout(() => {
-    index = (index + dir + totalImages) % totalImages
-    resetTransform()
-    loadImage()
-    img.style.transition = 'none'
-    img.style.transform = `translateX(${dir * 120}px) scale(${scale})`
-    
-    requestAnimationFrame(() => {
-      img.style.transition = 'transform 0.35s ease, opacity 0.25s ease'
-      img.style.transform = `translate(0,0) scale(${scale})`
-      img.style.opacity = '1'
-      animating = false
-    })
-  }, 250)
-}
-
-/* ===== NAV ===== */
-document.getElementById('next').onclick = () => slide(1)
-document.getElementById('prev').onclick = () => slide(-1)
-document.getElementById('close').onclick = closeViewer
-
-document.addEventListener('keydown', e => {
-  if (viewer.style.display !== 'block') return
-  if (e.key === 'ArrowRight') slide(1)
-  if (e.key === 'ArrowLeft') slide(-1)
-  if (e.key === 'Escape') closeViewer()
+/* ===== DOUBLE TAP / CLICK ===== */
+viewer.addEventListener('dblclick',()=>{
+  scale=scale===1?2:1
+  x=y=0
+  update()
 })
 
-/* ===== ZOOM PC ===== */
-viewer.addEventListener('wheel', e => {
-  e.preventDefault()
-  scale += e.deltaY < 0 ? 0.1 : -0.1
-  scale = Math.min(Math.max(scale, 1), 4)
-  updateTransform()
-}, { passive: false })
-
-/* ===== PAN PC ===== */
-viewer.addEventListener('mousedown', e => {
-  if (scale === 1) return
-  dragging = true
-  startX = e.clientX - x
-  startY = e.clientY - y
+viewer.addEventListener('touchend',e=>{
+  const now=Date.now()
+  if(now-lastTap<300){
+    scale=scale===1?2:1
+    x=y=0
+    update()
+  }
+  lastTap=now
 })
 
-window.addEventListener('mousemove', e => {
-  if (!dragging) return
-  x = e.clientX - startX
-  y = e.clientY - startY
-  updateTransform()
+/* ===== PAN ===== */
+viewer.addEventListener('mousedown',e=>{
+  if(scale===1)return
+  drag=true
+  startX=e.clientX-x
+  startY=e.clientY-y
 })
-
-window.addEventListener('mouseup', () => dragging = false)
+window.addEventListener('mousemove',e=>{
+  if(!drag)return
+  x=e.clientX-startX
+  y=e.clientY-startY
+  update()
+})
+window.addEventListener('mouseup',()=>drag=false)
 
 /* ===== TOUCH ===== */
-let startDist = 0
-let swipeStartX = 0
-
-viewer.addEventListener('touchstart', e => {
-  if (e.touches.length === 1) {
-    swipeStartX = e.touches[0].clientX
-    if (scale > 1) {
-      dragging = true
-      startX = e.touches[0].clientX - x
-      startY = e.touches[0].clientY - y
+let dist=0,swipeX=0
+viewer.addEventListener('touchstart',e=>{
+  if(e.touches.length===1){
+    swipeX=e.touches[0].clientX
+    if(scale>1){
+      drag=true
+      startX=e.touches[0].clientX-x
+      startY=e.touches[0].clientY-y
     }
   }
-  if (e.touches.length === 2) {
-    startDist = getDist(e.touches)
+  if(e.touches.length===2){
+    dist=Math.hypot(
+      e.touches[0].clientX-e.touches[1].clientX,
+      e.touches[0].clientY-e.touches[1].clientY
+    )
   }
 })
-
-viewer.addEventListener('touchmove', e => {
+viewer.addEventListener('touchmove',e=>{
   e.preventDefault()
-
-  if (e.touches.length === 2) {
-    const dist = getDist(e.touches)
-    scale *= dist / startDist
-    scale = Math.min(Math.max(scale, 1), 4)
-    startDist = dist
-    updateTransform()
+  if(e.touches.length===2){
+    let d=Math.hypot(
+      e.touches[0].clientX-e.touches[1].clientX,
+      e.touches[0].clientY-e.touches[1].clientY
+    )
+    scale*=d/dist
+    scale=Math.max(1,Math.min(scale,4))
+    dist=d
+    update()
   }
-
-  if (dragging && e.touches.length === 1) {
-    x = e.touches[0].clientX - startX
-    y = e.touches[0].clientY - startY
-    updateTransform()
+  if(drag&&e.touches.length===1){
+    x=e.touches[0].clientX-startX
+    y=e.touches[0].clientY-startY
+    update()
   }
-}, { passive: false })
-
-viewer.addEventListener('touchend', e => {
-  dragging = false
-
-  if (scale === 1 && e.changedTouches.length === 1) {
-    const dx = e.changedTouches[0].clientX - swipeStartX
-    if (dx > 60) slide(-1)
-    if (dx < -60) slide(1)
+},{passive:false})
+viewer.addEventListener('touchend',e=>{
+  drag=false
+  if(scale===1){
+    let dx=e.changedTouches[0].clientX-swipeX
+    if(dx>60)slide(-1)
+    if(dx<-60)slide(1)
   }
 })
 
-function getDist(t) {
-  return Math.hypot(
-    t[0].clientX - t[1].clientX,
-    t[0].clientY - t[1].clientY
-  )
-}
+/* ===== CONTROLS ===== */
+document.getElementById('prev').onclick=()=>slide(-1)
+document.getElementById('next').onclick=()=>slide(1)
+document.getElementById('close').onclick=close
 </script>
 
 </body>
