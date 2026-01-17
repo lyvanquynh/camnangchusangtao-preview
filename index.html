@@ -303,6 +303,19 @@ viewer.addEventListener('touchend',e=>{
   }
   lastTap=now
 })
+
+/* ===== DOUBLE CLICK ZOOM (PC) ===== */
+viewer.addEventListener('dblclick', e => {
+  if (scale === 1) {
+    scale = 2
+  } else {
+    scale = 1
+    x = 0
+    y = 0
+  }
+  update()
+})
+
 /* ===== PAN PC ===== */
 viewer.addEventListener('mousedown',e=>{
   if(scale===1)return
