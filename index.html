@@ -13,29 +13,23 @@ body {
   user-select: none;
 }
 
+/* Header */
 .header {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 10px;
 }
+.header img { height: 40px; }
+.header h1 { font-size: 18px; margin: 0; }
 
-.header img {
-  height: 40px;
-}
-
-.header h1 {
-  font-size: 18px;
-  margin: 0;
-}
-
+/* Gallery */
 .gallery {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 10px;
   padding: 10px;
 }
-
 .gallery img {
   width: 100%;
   aspect-ratio: 1 / 1;
@@ -44,41 +38,73 @@ body {
   cursor: pointer;
 }
 
+/* Lightbox */
 .lightbox {
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.9);
   display: none;
+  z-index: 999;
+}
+
+/* Viewer */
+.viewer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 999;
-  flex-direction: column;
 }
 
-.lightbox img {
-  max-width: 95%;
+.viewer img {
+  max-width: 90%;
   max-height: 85%;
   border-radius: 8px;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+  touch-action: none;
 }
 
+/* Fade */
+.fade {
+  opacity: 0;
+}
+
+/* Arrows */
+.arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 40px;
+  color: white;
+  cursor: pointer;
+  padding: 10px;
+  opacity: 0.7;
+  z-index: 10;
+}
+.arrow:hover { opacity: 1; }
+.arrow.left { left: 10px; }
+.arrow.right { right: 10px; }
+
+/* Counter */
 .counter {
-  color: #fff;
-  margin-top: 10px;
+  position: absolute;
+  bottom: 20px;
+  color: white;
   font-size: 14px;
+  z-index: 10;
 }
 </style>
 </head>
 
 <body>
 
-<!-- Header -->
 <div class="header">
-  <!-- Nếu không có logo thì xóa dòng img -->
   <img src="logo.png" alt="Logo">
   <h1>Album xem trước</h1>
 </div>
 
-<!-- Gallery -->
 <div class="gallery">
   <img src="images/01.jpg">
   <img src="images/02.jpg">
@@ -102,71 +128,122 @@ body {
   <img src="images/20.jpg">
 </div>
 
-<!-- Lightbox -->
 <div class="lightbox" id="lightbox">
-  <img id="lightbox-img">
-  <div class="counter" id="counter"></div>
+  <div class="viewer">
+    <div class="arrow left" id="prev">&#10094;</div>
+    <img id="viewerImg">
+    <div class="arrow right" id="next">&#10095;</div>
+    <div class="counter" id="counter"></div>
+  </div>
 </div>
 
 <script>
-const images = document.querySelectorAll('.gallery img');
+const thumbs = document.querySelectorAll('.gallery img');
 const lightbox = document.getElementById('lightbox');
-const lightboxImg = document.getElementById('lightbox-img');
+const viewerImg = document.getElementById('viewerImg');
 const counter = document.getElementById('counter');
+const prevBtn = document.getElementById('prev');
+const nextBtn = document.getElementById('next');
 
-let currentIndex = 0;
-const total = images.length;
+let current = 0;
+let scale = 1;
+let startDist = 0;
+const total = thumbs.length;
 
-// Mở ảnh
-images.forEach((img, index) => {
+/* Open */
+thumbs.forEach((img, i) => {
   img.onclick = () => {
-    currentIndex = index;
-    showImage();
-    lightbox.style.display = 'flex';
+    current = i;
+    openImage();
+    lightbox.style.display = 'block';
+  };
+});
+
+function openImage() {
+  scale = 1;
+  viewerImg.classList.add('fade');
+  setTimeout(() => {
+    viewerImg.src = thumbs[current].src;
+    viewerImg.style.transform = `scale(${scale})`;
+    counter.textContent = `${current + 1} / ${total}`;
+    viewerImg.classList.remove('fade');
+  }, 150);
+}
+
+/* Navigation */
+function nextImage() {
+  if (current < total - 1) {
+    current++;
+    openImage();
+  }
+}
+function prevImage() {
+  if (current > 0) {
+    current--;
+    openImage();
+  }
+}
+nextBtn.onclick = nextImage;
+prevBtn.onclick = prevImage;
+
+/* Keyboard */
+document.addEventListener('keydown', e => {
+  if (lightbox.style.display === 'block') {
+    if (e.key === 'ArrowRight') nextImage();
+    if (e.key === 'ArrowLeft') prevImage();
+    if (e.key === 'Escape') lightbox.style.display = 'none';
   }
 });
 
-function showImage() {
-  lightboxImg.src = images[currentIndex].src;
-  counter.textContent = `${currentIndex + 1} / ${total}`;
+/* Mouse wheel zoom */
+viewerImg.addEventListener('wheel', e => {
+  e.preventDefault();
+  scale += e.deltaY * -0.001;
+  scale = Math.min(Math.max(1, scale), 3);
+  viewerImg.style.transform = `scale(${scale})`;
+});
+
+/* Touch pinch zoom */
+viewerImg.addEventListener('touchstart', e => {
+  if (e.touches.length === 2) {
+    startDist = getDistance(e.touches[0], e.touches[1]);
+  }
+});
+
+viewerImg.addEventListener('touchmove', e => {
+  if (e.touches.length === 2) {
+    const dist = getDistance(e.touches[0], e.touches[1]);
+    scale *= dist / startDist;
+    scale = Math.min(Math.max(1, scale), 3);
+    viewerImg.style.transform = `scale(${scale})`;
+    startDist = dist;
+  }
+});
+
+function getDistance(t1, t2) {
+  return Math.hypot(
+    t2.clientX - t1.clientX,
+    t2.clientY - t1.clientY
+  );
 }
 
-// Đóng
-lightbox.onclick = () => {
-  lightbox.style.display = 'none';
+/* Swipe */
+let startX = 0;
+lightbox.addEventListener('touchstart', e => {
+  if (e.touches.length === 1) startX = e.touches[0].clientX;
+});
+lightbox.addEventListener('touchend', e => {
+  const endX = e.changedTouches[0].clientX;
+  if (startX - endX > 60) nextImage();
+  if (endX - startX > 60) prevImage();
+});
+
+/* Close */
+lightbox.onclick = e => {
+  if (e.target === lightbox) lightbox.style.display = 'none';
 };
 
-// Vuốt trái phải (mobile)
-let startX = 0;
-
-lightbox.addEventListener('touchstart', e => {
-  startX = e.touches[0].clientX;
-});
-
-lightbox.addEventListener('touchend', e => {
-  let endX = e.changedTouches[0].clientX;
-  if (endX - startX > 50) {
-    prevImage();
-  } else if (startX - endX > 50) {
-    nextImage();
-  }
-});
-
-function nextImage() {
-  if (currentIndex < total - 1) {
-    currentIndex++;
-    showImage();
-  }
-}
-
-function prevImage() {
-  if (currentIndex > 0) {
-    currentIndex--;
-    showImage();
-  }
-}
-
-// Ẩn chuột phải
+/* Disable right click */
 document.addEventListener('contextmenu', e => e.preventDefault());
 </script>
 
