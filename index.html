@@ -32,31 +32,24 @@ header h1{font-size:18px;margin:0}
   height:calc(100vh - 60px);
   overflow-y:auto
 }
-/* ===== MOBILE: Thumbnail to hơn, cân đối hơn ===== */
+/* ===== Layout album cho MOBILE ===== */
 @media (max-width: 768px) {
-  #album{
-    grid-template-columns: repeat(2, 1fr);   /* 2 cột rõ ràng */
-    gap: 16px;
-    padding: 16px;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+  #album {
+    grid-template-columns: repeat(2, 1fr); /* 2 cột */
+    gap: 14px;
+    padding: 12px;
   }
 
-  .thumb{
-    border-radius: 12px;
-    padding: 0;                 /* bỏ padding để ảnh to hết */
-    background: #111;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  .thumb {
+    height: auto;
   }
 
-  .thumb img{
+  .thumb img {
     width: 100%;
-    height: 100%;
-    aspect-ratio: 3 / 4;        /* tỷ lệ trang giấy */
-    object-fit: cover;          /* QUAN TRỌNG: làm ảnh to lên */
-    border-radius: 10px;
+    height: auto;
+    max-height: none;
+    object-fit: contain;
+    transform: scale(1.2); /* PHÓNG TO ẢNH */
   }
 }
 
