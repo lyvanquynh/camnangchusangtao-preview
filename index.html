@@ -293,13 +293,13 @@ viewer.addEventListener('wheel',e=>{
   update()
 },{passive:false})
 
-/* ===== DOUBLE TAP ZOOM (MOBILE – CHUẨN, KHÔNG ẢNH HƯỞNG PINCH) ===== */
+/* ===== DOUBLE TAP ZOOM (MOBILE – CHẠM 2 LẦN PHÓNG TO / THU NHỎ) ===== */
 let lastTapTime = 0
-let lastTouchX = 0
-let lastTouchY = 0
+let lastTapX = 0
+let lastTapY = 0
 
 viewer.addEventListener('touchend', e => {
-  // Chỉ nhận 1 ngón
+  // Chỉ xử lý khi 1 ngón
   if (e.changedTouches.length !== 1) return
   if (isPinching) return
   if (drag) return
@@ -308,10 +308,10 @@ viewer.addEventListener('touchend', e => {
   const touch = e.changedTouches[0]
   const delta = now - lastTapTime
 
-  const dx = Math.abs(touch.clientX - lastTouchX)
-  const dy = Math.abs(touch.clientY - lastTouchY)
+  const dx = Math.abs(touch.clientX - lastTapX)
+  const dy = Math.abs(touch.clientY - lastTapY)
 
-  // Phải gần cùng 1 vị trí → mới tính là double tap
+  // Phải gần cùng vị trí và trong thời gian ngắn
   if (delta > 0 && delta < 300 && dx < 30 && dy < 30) {
     if (scale === 1) {
       scale = 2
@@ -324,10 +324,11 @@ viewer.addEventListener('touchend', e => {
     lastTapTime = 0
   } else {
     lastTapTime = now
-    lastTouchX = touch.clientX
-    lastTouchY = touch.clientY
+    lastTapX = touch.clientX
+    lastTapY = touch.clientY
   }
 })
+
 
 /* ===== DOUBLE CLICK ZOOM (PC) ===== */
 viewer.addEventListener('dblclick', e => {
