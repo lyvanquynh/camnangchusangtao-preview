@@ -51,7 +51,9 @@ header h1{font-size:18px;margin:0}
   inset:0;
   background:#000;
   display:none;
-  z-index:999
+  z-index:999;
+  padding-bottom:100px;
+  box-sizing:border-box
 }
 
 .top-controls{
@@ -83,7 +85,7 @@ header h1{font-size:18px;margin:0}
 
 #imageWrap{
   width:100%;
-  height:100%;
+  height:calc(100% - 100px);
   display:flex;
   justify-content:center;
   align-items:center;
@@ -96,7 +98,8 @@ header h1{font-size:18px;margin:0}
   transition:transform .25s ease,opacity .25s ease;
   transform-origin:center;
   user-select:none;
-  pointer-events:none
+  pointer-events:none;
+  object-fit:contain
 }
 
 /* ===== THUMB STRIP ===== */
@@ -105,7 +108,7 @@ header h1{font-size:18px;margin:0}
   bottom:0;
   left:0;
   right:0;
-  height:90px;
+  height:100px;
   background:rgba(0,0,0,.75);
   display:flex;
   justify-content:center;
@@ -124,7 +127,7 @@ header h1{font-size:18px;margin:0}
   height:100%;
   cursor:pointer;
   opacity:.5;
-  border-radius:4px;
+  border-radius:4px
 }
 #thumbStrip img.active{
   opacity:1;
@@ -175,7 +178,6 @@ let index=0,scale=1,x=0,y=0
 let drag=false,startX=0,startY=0
 let anim=false,lastTap=0
 
-/* ===== ALBUM + THUMBS ===== */
 for(let i=1;i<=total;i++){
   const n=String(i).padStart(2,'0')
 
@@ -191,7 +193,6 @@ for(let i=1;i<=total;i++){
   strip.appendChild(t)
 }
 
-/* ===== PRELOAD ===== */
 function preload(i){
   [-1,1].forEach(o=>{
     let n=i+o
@@ -202,7 +203,6 @@ function preload(i){
   })
 }
 
-/* ===== VIEWER ===== */
 function open(i){
   index=i
   viewer.style.display='block'
@@ -225,7 +225,6 @@ function load(){
   requestAnimationFrame(()=>img.style.opacity=1)
 }
 
-/* ===== SLIDE ===== */
 function slide(d){
   if(anim)return
   anim=true
@@ -246,7 +245,6 @@ function slide(d){
   },250)
 }
 
-/* ===== THUMB STRIP ===== */
 function setActive(){
   [...strip.children].forEach((t,i)=>{
     t.classList.toggle('active',i===index)
@@ -271,7 +269,6 @@ function jump(i){
   load()
 }
 
-/* ===== TRANSFORM ===== */
 function reset(){
   scale=1;x=0;y=0
   update()
@@ -280,7 +277,7 @@ function update(){
   img.style.transform=`translate(${x}px,${y}px) scale(${scale})`
 }
 
-/* ===== ZOOM MOUSE WHEEL (NEW) ===== */
+/* ===== ZOOM WHEEL ===== */
 viewer.addEventListener('wheel',e=>{
   e.preventDefault()
   const delta = e.deltaY < 0 ? 0.1 : -0.1
@@ -289,7 +286,6 @@ viewer.addEventListener('wheel',e=>{
   update()
 },{passive:false})
 
-/* ===== DOUBLE TAP / CLICK ===== */
 viewer.addEventListener('dblclick',()=>{
   scale=scale===1?2:1
   x=y=0
@@ -306,7 +302,6 @@ viewer.addEventListener('touchend',e=>{
   lastTap=now
 })
 
-/* ===== PAN PC ===== */
 viewer.addEventListener('mousedown',e=>{
   if(scale===1)return
   drag=true
@@ -321,7 +316,6 @@ window.addEventListener('mousemove',e=>{
 })
 window.addEventListener('mouseup',()=>drag=false)
 
-/* ===== TOUCH ===== */
 let dist=0,swipeX=0
 viewer.addEventListener('touchstart',e=>{
   if(e.touches.length===1){
@@ -368,12 +362,10 @@ viewer.addEventListener('touchend',e=>{
   }
 })
 
-/* ===== STRIP TOUCH FIX ===== */
 strip.addEventListener('touchstart',e=>e.stopPropagation(),{passive:true})
 strip.addEventListener('touchmove',e=>e.stopPropagation(),{passive:true})
 strip.addEventListener('touchend',e=>e.stopPropagation(),{passive:true})
 
-/* ===== DRAG STRIP PC ===== */
 let isDown=false,startXStrip=0,scrollLeftStrip=0
 strip.addEventListener('mousedown',e=>{
   isDown=true
@@ -390,7 +382,6 @@ strip.addEventListener('mousemove',e=>{
   strip.scrollLeft=scrollLeftStrip-walk
 })
 
-/* ===== CONTROLS ===== */
 document.getElementById('prev').onclick=()=>slide(-1)
 document.getElementById('next').onclick=()=>slide(1)
 document.getElementById('close').onclick=close
