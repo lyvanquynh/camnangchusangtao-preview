@@ -35,24 +35,28 @@ header h1{font-size:18px;margin:0}
 /* ===== MOBILE: Thumbnail to hơn, cân đối hơn ===== */
 @media (max-width: 768px) {
   #album{
-    grid-template-columns: repeat(2, minmax(0, 1fr)); /* 2 cột rõ ràng */
-    gap: 18px;
-    padding: 18px;
+    grid-template-columns: repeat(2, 1fr);   /* 2 cột rõ ràng */
+    gap: 16px;
+    padding: 16px;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
 
   .thumb{
-    border-radius: 10px;
-    padding: 6px;
+    border-radius: 12px;
+    padding: 0;                 /* bỏ padding để ảnh to hết */
+    background: #111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .thumb img{
     width: 100%;
-    height: auto;
-    aspect-ratio: 3 / 4;   /* tỷ lệ trang giấy */
-    object-fit: contain;
-    background: #000;
+    height: 100%;
+    aspect-ratio: 3 / 4;        /* tỷ lệ trang giấy */
+    object-fit: cover;          /* QUAN TRỌNG: làm ảnh to lên */
+    border-radius: 10px;
   }
 }
 
