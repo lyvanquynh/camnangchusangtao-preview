@@ -293,13 +293,12 @@ viewer.addEventListener('wheel',e=>{
   update()
 },{passive:false})
 
-/* ===== DOUBLE TAP ZOOM (MOBILE – CHẠM 2 LẦN PHÓNG TO / THU NHỎ) ===== */
+/* ===== DOUBLE TAP ZOOM (MOBILE – PHÓNG TO / THU NHỎ ỔN ĐỊNH) ===== */
 let lastTapTime = 0
 let lastTapX = 0
 let lastTapY = 0
 
 viewer.addEventListener('touchend', e => {
-  // Chỉ xử lý khi 1 ngón
   if (e.changedTouches.length !== 1) return
   if (isPinching) return
   if (drag) return
@@ -311,9 +310,9 @@ viewer.addEventListener('touchend', e => {
   const dx = Math.abs(touch.clientX - lastTapX)
   const dy = Math.abs(touch.clientY - lastTapY)
 
-  // Phải gần cùng vị trí và trong thời gian ngắn
   if (delta > 0 && delta < 300 && dx < 30 && dy < 30) {
-    if (scale === 1) {
+    // Nếu đang gần mức thu nhỏ → phóng to
+    if (scale <= 1.05) {
       scale = 2
     } else {
       scale = 1
