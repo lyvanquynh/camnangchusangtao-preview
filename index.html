@@ -32,6 +32,21 @@ header h1{font-size:18px;margin:0}
   height:calc(100vh - 60px);
   overflow-y:auto
 }
+/* ===== MOBILE: Thumbnail to hơn, cân đối hơn ===== */
+@media (max-width: 768px) {
+  #album{
+    grid-template-columns: repeat(2, 1fr); /* 2 cột */
+    gap: 16px;
+    padding: 16px;
+    overflow-y: auto;
+  }
+
+  .thumb img{
+    aspect-ratio: 3 / 4; /* giữ tỷ lệ đẹp */
+    object-fit: contain;
+  }
+}
+
 .thumb{
   background:#111;
   border-radius:8px;
